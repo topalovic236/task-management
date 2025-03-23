@@ -15,7 +15,7 @@ import os
 
 
 router = APIRouter(
-    prefix='/auth',
+    
     tags = ['auth']
 )
 
@@ -55,6 +55,7 @@ async def create_user(db: db_dependency, create_user_request: UserCreate):
         )
 
     hashed_password = bcrypt_context.hash(create_user_request.password)
+    print(f"Hashed password: {hashed_password}")
 
     create_user_model = User(
         email=create_user_request.email,
@@ -73,6 +74,10 @@ async def create_user(db: db_dependency, create_user_request: UserCreate):
 @router.post('/token', response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = db.query(User).filter(User.username == form_data.username).first()
+    print(f"User from DB: {user}")
+    if user:
+        print(f"Stored password hash: {user.hashed_password}")
+        print(f"Input password: {form_data.password}")
     if not user or not bcrypt_context.verify(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -86,8 +91,8 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         )
 
     
-    expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRES_DELTA)
-    access_token = create_access_token(user.username, user.id, user.role, expires_delta)
+    
+    access_token = create_access_token(user.username, user.id, user.role, timedelta(minutes=20))
     
     return {"access_token": access_token, "token_type": "bearer"}
 
