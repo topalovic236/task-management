@@ -24,6 +24,9 @@ class User(BaseModel):
     class Config:
         from_attributes = True
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 class TaskCreate(BaseModel):
     title : str = Field(min_length=1, max_length=100)
