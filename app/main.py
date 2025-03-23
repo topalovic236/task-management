@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-from models import Base
-
+from app.database import SessionLocal, engine
+from app.models import Base
+from routes.auth import router as auth_router
 app = FastAPI()
+
+app.include_router(auth_router, prefix="/auth", tags=["/auth"])
 
 Base.metadata.create_all(bind=engine)
 
