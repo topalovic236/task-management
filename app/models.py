@@ -24,6 +24,6 @@ class Task(Base):
     completed = Column(Boolean, default=False)
     deadline = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"))
-    owner = relationship("User", back_populates="tasks")
+    
     
 
