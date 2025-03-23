@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from dotenv import load_dotenv
-from ..schemas import UserCreate, User, Token
+from ..schemas import UserCreate,  Token
 import os
 
 
@@ -44,51 +44,81 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 @router.post('/user', status_code=status.HTTP_201_CREATED)
-async def create_user(db : db_dependency, create_user_request: UserCreate):
+async def create_user(db: db_dependency, create_user_request: UserCreate):
+    
+    existing_user = db.query(User).filter(
+        (User.email == create_user_request.email) | 
+        (User.username == create_user_request.username)
+    ).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email or username already exists"
+        )
+
+    
     hashed_password = bcrypt_context.hash(create_user_request.password)
+
+    
     create_user_model = User(
         email=create_user_request.email,
         username=create_user_request.username,
-        password=hashed_password,
-        is_active=True
-
+        hashed_password=hashed_password,
     )
     db.add(create_user_model)
     db.commit()
-    return {"message": "User created successfully"}
 
+    
+    return {
+        "id": create_user_model.id,
+        "username": create_user_model.username,
+        "email": create_user_model.email
+    }
 
 @router.post('/token', response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = db.query(User).filter(User.username == form_data.username).first()
     if not user or not bcrypt_context.verify(form_data.password, user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
+
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is inactive"
+        )
+
     
     expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRES_DELTA)
-    access_token = create_access_token(user.username, user.id, "user_role_placeholder", expires_delta)
+    access_token = create_access_token(user.username, user.id, user.role, expires_delta)
     
-    return {"access_token" : access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer"}
 
-
-
-def create_access_token(username: str, user_id: int, role:str, expires_delta:timedelta):
+def create_access_token(username: str, user_id: int, role: str, expires_delta: timedelta):
     encode = {"sub": username, "id": user_id, "role": role}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({"exp": expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
-async def get_current_user(token : Annotated[str, Depends(oauth2_bearer)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get('sub')
-        user_id : int = payload.get('id')
+        user_id: int = payload.get('id')
         user_role: str = payload.get('role')
         if username is None or user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Couldn't validate user")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Couldn't validate user"
+            )
         
         return {"username": username, "id": user_id, "role": user_role}
     
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Couldn't validate user")
-    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Couldn't validate user"
+        )
