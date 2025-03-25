@@ -20,7 +20,7 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[str, Depends(get_current_user)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 
@@ -66,5 +66,5 @@ async def delete_user(db : db_dependency, user : user_dependency, user_id : int)
 @router.get('/tasks')
 async def get_all_tasks(db : db_dependency, user : user_dependency):
     if user is None or  user.get('role') != 'admin':
-        raise HTTPException(status_code=401, detail='Authentication failed')
+        raise HTTPException(status_code=403, detail='Authentication failed')
     return db.query(Task).all()
