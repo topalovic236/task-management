@@ -57,7 +57,7 @@ async def create_task(user : user_dependency, db : db_dependency, task_create : 
     return {'message' : "Task successfully created"}
 
 @router.put('/task/{task_id}', status_code=status.HTTP_200_OK)
-async def update_task(user : user_dependency, db : db_dependency, task_update : TaskUpdate, task_id : int = Path(gt=0)):
+async def update_task(user : user_dependency, db : db_dependency, task_update : TaskUpdate, task_id : int):
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Couldn't validate user")
@@ -77,7 +77,7 @@ async def update_task(user : user_dependency, db : db_dependency, task_update : 
     return {"message" : "Task successfully updated!", "task" : task_model}
     
 @router.delete('/task/{task_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_task(user : user_dependency, db : db_dependency, task_id : int = Path(gt=0)):
+async def delete_task(user : user_dependency, db : db_dependency, task_id : int):
 
     if user is None:
         raise HTTPException(status_code=401, detail="Couldn't validate user")
