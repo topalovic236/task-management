@@ -1,7 +1,6 @@
 from datetime import timedelta, datetime, timezone
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 from app.database import SessionLocal
@@ -55,12 +54,13 @@ async def create_user(db: db_dependency, create_user_request: UserCreate):
         )
 
     hashed_password = bcrypt_context.hash(create_user_request.password)
-    print(f"Hashed password: {hashed_password}")
+    
 
     create_user_model = User(
         email=create_user_request.email,
         username=create_user_request.username,
         hashed_password=hashed_password,
+        
     )
     db.add(create_user_model)
     db.commit()
@@ -74,7 +74,7 @@ async def create_user(db: db_dependency, create_user_request: UserCreate):
 @router.post('/token', response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = db.query(User).filter(User.username == form_data.username).first()
-    print(f"User from DB: {user}")
+    
     if user:
         print(f"Stored password hash: {user.hashed_password}")
         print(f"Input password: {form_data.password}")

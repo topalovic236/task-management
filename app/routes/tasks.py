@@ -32,7 +32,7 @@ async def get_task(user : user_dependency, db: db_dependency, task_id : int = Pa
     if user is None:
          raise HTTPException(status_code=401, detail='Authentication failed')
     
-    task_to_return = db.query(Task).filter(Task.id == task_id, Task.user_id == user.get('id')).first()
+    task_to_return = db.query(Task).filter(Task.id == task_id, Task.owner_id == user.get('id')).first()
 
     if not task_to_return:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -46,11 +46,11 @@ async def create_task(user : user_dependency, db : db_dependency, task_create : 
     if user is None:
         raise HTTPException(status_code=401, detail='Authentication failed')
     
-    existing_task = db.query(Task).filter(Task.title == task_create.title, Task.user_id == user.get('id')).first()
+    existing_task = db.query(Task).filter(Task.title == task_create.title, Task.owner_id == user.get('id')).first()
     if existing_task:
         raise HTTPException(status_code=400, detail="Task already exists")
 
-    task_model = Task(**task_create.model_dump(), user_id=user.get('id'))
+    task_model = Task(**task_create.model_dump(), owner_id=user.get('id'))
 
     db.add(task_model)
     db.commit()
@@ -62,7 +62,7 @@ async def update_task(user : user_dependency, db : db_dependency, task_update : 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Couldn't validate user")
     
-    task_model = db.query(Task).filter(Task.id == task_id, Task.user_id == user.get('id')).first()
+    task_model = db.query(Task).filter(Task.id == task_id, Task.owner_id == user.get('id')).first()
 
     if task_model is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found" )
@@ -82,7 +82,7 @@ async def delete_task(user : user_dependency, db : db_dependency, task_id : int)
     if user is None:
         raise HTTPException(status_code=401, detail="Couldn't validate user")
 
-    task_model = db.query(Task).filter(Task.id == task_id, Task.user_id == user.get('id')).first()
+    task_model = db.query(Task).filter(Task.id == task_id, Task.owner_id == user.get('id')).first()
 
     if task_model is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
