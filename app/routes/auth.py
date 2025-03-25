@@ -61,6 +61,7 @@ async def create_user(db: db_dependency, create_user_request: UserCreate):
         username=create_user_request.username,
         hashed_password=hashed_password,
         
+        
     )
     db.add(create_user_model)
     db.commit()
@@ -75,9 +76,8 @@ async def create_user(db: db_dependency, create_user_request: UserCreate):
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = db.query(User).filter(User.username == form_data.username).first()
     
-    if user:
-        print(f"Stored password hash: {user.hashed_password}")
-        print(f"Input password: {form_data.password}")
+    
+       
     if not user or not bcrypt_context.verify(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
