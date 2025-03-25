@@ -77,7 +77,6 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     user = db.query(User).filter(User.username == form_data.username).first()
     
     
-       
     if not user or not bcrypt_context.verify(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
