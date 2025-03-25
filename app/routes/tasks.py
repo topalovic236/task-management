@@ -71,7 +71,7 @@ async def update_task(user : user_dependency, db : db_dependency, task_update : 
     if task_model is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found" )
     
-    if task_model.owner_id != user.get('id') and user.get('role') != 'admin':
+    if task_model.owner_id != user.get('id'):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     
     update_data = task_update.model_dump(exclude_unset=True)
@@ -94,10 +94,11 @@ async def delete_task(user : user_dependency, db : db_dependency, task_id : int)
     if task_model is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     
-    if task_model.owner_id != user.get('id') and user.get('role') != 'admin':
+    if task_model.owner_id != user.get('id'):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     
     db.delete(task_model)
     db.commit()
 
     return {"message" : "Task successfully deleted!"}
+

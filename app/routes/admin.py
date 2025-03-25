@@ -60,3 +60,11 @@ async def delete_user(db : db_dependency, user : user_dependency, user_id : int)
         return {"message" : "User successfully deleted"}
     
     raise HTTPException(status_code=403, detail="User is not an admin!")
+
+
+
+@router.get('/tasks')
+async def get_all_tasks(db : db_dependency, user : user_dependency):
+    if user is None or  user.get('role') != 'admin':
+        raise HTTPException(status_code=401, detail='Authentication failed')
+    return db.query(Task).all()
