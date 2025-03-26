@@ -22,9 +22,6 @@ def get_db():
 @router.put('/user/{user_id}')
 async def update_user(user_id: int, user_update: UserUpdate, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
 
-    print(f"Authenticated user: {user}")  
-    print(f"Trying to update user with ID: {user_id}")
-
     user_to_update = db.query(User).filter(User.id == user_id).first()
 
     if not user_to_update:
