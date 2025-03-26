@@ -102,3 +102,15 @@ async def delete_task(user : user_dependency, db : db_dependency, task_id : int)
 
     return {"message" : "Task successfully deleted!"}
 
+@router.get('/tasks/{user_id}')
+async def get_tasks(user : user_dependency, db : db_dependency, user_id : int):
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentication falied")
+    
+    tasks_to_return = db.query(Task).filter(Task.owner_id == user_id).all()
+
+    if user.get('role') == 'admin' or user.get('id') == user_id: 
+        return tasks_to_return
+
+    else:
+        raise HTTPException(status_code=403, detail="Not authorized for other's tasks")
